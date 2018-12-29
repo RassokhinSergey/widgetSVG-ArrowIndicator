@@ -1,0 +1,9 @@
+text {
+    font-family: Helvetica;
+    fill: #ffffff;
+    font-size: 1.375em;
+}
+#text-value {
+    font-size: 1.75em;
+    font-weight: 700;
+} 

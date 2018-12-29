@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Example SVG-ArrowIndicator</title>
+</head>
+<body>
+    <div style="display: inline-block;"><object id="voltL1" data="svg/SVG-ArrowIndicator.svgz" type="image/svg+xml" data-service-url="/handlers/getControlVolt.php"></object><br><span>фаза L1</span></div>
+    <div style="display: inline-block;"><object id="voltL2" data="svg/SVG-ArrowIndicator.svgz" type="image/svg+xml" data-service-url="/handlers/getControlVolt.php"></object><br><span>фаза L2</span></div>
+    <div style="display: inline-block;"><object id="voltL3" data="svg/SVG-ArrowIndicator.svgz" type="image/svg+xml" data-service-url="/handlers/getControlVolt.php"></object><br><span>фаза L3</span></div>
+    <div>
+       Если обьектов несколлько то можно задать разные handlers но лучьше задать разные id тогда он будет передаваться в запросе и на стороне handlers для разных обьектов можно довать разные данные <br>
+    </div>
+</body>
+</html>

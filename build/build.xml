@@ -1,0 +1,155 @@
+<?xml version="1.0"?>
+<project name="SVG-ArrowIndicator" basedir="." default="info">
+
+<property file="ant/build.properties" />
+
+<property name="dir.src"      value="${basedir}/../src" />
+<property name="dir.examples" value="${basedir}/../examples" />
+<property name="dir.build"    value="${basedir}/../build" />
+<property name="dir.temp"     value="${basedir}/../build/temp" />
+<property name="dir.css"      value="${dir.src}/css" />
+<property name="dir.js"       value="${dir.src}/js" />
+<property name="dir.svg"      value="${dir.src}/svg" />
+
+
+<property name="src.css"    value="${dir.css}/${ant.project.name}.css" />
+<property name="src.js"     value="${dir.js}/${ant.project.name}.js" />
+<property name="src.svg"    value="${dir.svg}/${ant.project.name}.svg" />
+
+<target name="info">
+    <echo>
+        =============================
+        Основные команды
+        =============================
+        info - Показывает эту помощь.
+        build - Собрать проект.
+        dist - Формирует распространяемый пакет.
+        clean - Удаляет ранее созданные файлы при build/ и dist/.
+        check - Выполнение задач: ESLint, JShint, CSSlint.
+    </echo>
+</target>
+
+<target name="clean">
+    <delete dir="${dir.build}/logs" />
+    <delete dir="${dir.build}/pdepend" />
+    <delete dir="${dir.build}/temp" />
+    <delete dir="${dir.build}/code-browser" />
+    <delete file="${dir.examples}/example1/svg/${ant.project.name}.svg" />
+</target>
+
+<target name="prepare" depends="clean" description="Подготовить build">
+    <mkdir dir="${dir.build}/logs" />
+    <mkdir dir="${dir.build}/pdepend" />
+    <mkdir dir="${dir.build}/temp" />
+    <mkdir dir="${dir.build}/code-browser" />
+</target>
+
+<target name="check" depends="prepare, ESLint, JShint, CSSlint" description="Выполнение задач проверки кода">
+</target>
+
+<target name="build" depends="prepare">
+    <concat destfile="${dir.temp}/${ant.project.name}.concat.css" fixlastline="yes">
+        <fileset dir="${dir.css}">
+            <include name="*.css" />
+        </fileset>
+    </concat>
+
+    <concat destfile="${dir.temp}/${ant.project.name}.concat.js" fixlastline="yes">
+        <fileset dir="${dir.js}">
+            <include name="**.js" />
+        </fileset>
+    </concat>
+
+    <loadfile property="file.css" srcFile="${dir.temp}/${ant.project.name}.concat.css" />
+    <loadfile property="file.js" srcFile="${dir.temp}/${ant.project.name}.concat.js" />
+
+    <copy file="${src.svg}" tofile="${dir.temp}/${ant.project.name}.svg" />
+
+    <replace file="${dir.temp}/${ant.project.name}.svg" token="@css@" value="${file.css}" />
+    <replace file="${dir.temp}/${ant.project.name}.svg" token="@js@"  value="${file.js}" />
+
+
+    <copy file="${src.svg}" tofile="${dir.temp}/${ant.project.name}.raw.svg" />
+    <antcall target="UglifyCSS" />
+    <antcall target="UglifyJS" />
+
+    <loadfile property="file.min.css" srcFile="${dir.temp}/${ant.project.name}.min.css" />
+    <loadfile property="file.min.js" srcFile="${dir.temp}/${ant.project.name}.min.js" />
+
+    <replace file="${dir.temp}/${ant.project.name}.raw.svg" token="@css@" value="${file.min.css}" />
+    <replace file="${dir.temp}/${ant.project.name}.raw.svg" token="@js@"  value="${file.min.js}" />
+
+    <antcall target="SVGo" />
+
+    <gzip zipfile="${dir.temp}/${ant.project.name}.svgz" src="${dir.temp}/${ant.project.name}.min.svg"/>
+
+    <!--  обновить примеры  -->
+    <copy file="${dir.temp}/${ant.project.name}.svg" tofile="${dir.examples}/example1/svg/${ant.project.name}.svgz" />
+    <copy file="${dir.temp}/${ant.project.name}.svg" tofile="${dir.examples}/example2/svg/${ant.project.name}.svgz" />
+</target>
+
+<target name="dist" depends="build">
+    <tstamp>
+        <format property="tstamp.value" pattern="yyyy.MM.dd_HHmm" />
+        <format property="current.tstamp" pattern="d MMM yyyy HH:mm:ss" locale="en,US"/>
+    </tstamp>
+
+    <tar destfile="dist/${ant.project.name}-${tstamp.value}.tar.gz" compression="gzip">
+          <fileset dir="${dir.examples}/svg/">
+            <include name="**/*" />
+          </fileset>
+    </tar>
+</target>
+
+<!-- /////////////   JavaScript   //////////////////-->
+
+<target name="ESLint" description="Проверка стандарта оформления кода JavaScript">
+    <exec executable="eslint" failonerror="false">
+        <arg line="${dir.js}" />
+        <arg line="--config ${dir.build}/eslint.json" />
+    </exec>
+</target>
+
+<target name="JShint" description="Инструмент проверки кода JavaScript">
+    <exec executable="jshint" failonerror="false">
+        <arg line="${dir.js}" />
+        <arg line="--config ${dir.build}/jshint.json" />
+    </exec>
+</target>
+
+<target name="UglifyJS" description="Минификация кода JavaScript">
+    <exec executable="uglifyjs" failonerror="false">
+        <arg line="${dir.temp}/${ant.project.name}.concat.js" />
+        <arg line="-o ${dir.temp}/${ant.project.name}.min.js -c -m --mangle-props --warn" />
+    </exec>
+</target>
+
+<!-- /////////////   CSS   //////////////////-->
+
+<target name="CSSlint" description="Инструмент проверки кода CSS">
+    <exec executable="csslint" failonerror="false" >
+        <arg line="--warnings=box-model,floats" />
+        <arg line="--format=compact" />
+        <arg line="${dir.css}" />
+    </exec>
+</target>
+
+<target name="UglifyCSS" description="Минификация кода CSS">
+    <exec executable="uglifycss" failonerror="false" > 
+        <arg line="--ugly-comments" />
+        <arg line="${dir.temp}/${ant.project.name}.concat.css" /> 
+        <arg line="--output ${dir.temp}/${ant.project.name}.min.css" />
+    </exec>
+</target>
+
+<!-- /////////////   SVG   //////////////////-->
+
+<target name="SVGo" description="Минификация кода SVG">
+    <exec executable="svgo">
+        <arg line="--input=${dir.temp}/${ant.project.name}.raw.svg" />
+        <arg line="--output=${dir.temp}/${ant.project.name}.min.svg" />
+        <!--        <arg line="-config=${dir.build}" />    -->
+    </exec>
+</target>
+
+</project>
