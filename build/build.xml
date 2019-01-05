@@ -7,6 +7,7 @@
 <property name="dir.examples" value="${basedir}/../examples" />
 <property name="dir.build"    value="${basedir}/../build" />
 <property name="dir.temp"     value="${basedir}/../build/temp" />
+<property name="dir.dist"     value="${basedir}/../dist" />
 <property name="dir.css"      value="${dir.src}/css" />
 <property name="dir.js"       value="${dir.src}/js" />
 <property name="dir.svg"      value="${dir.src}/svg" />
@@ -83,10 +84,21 @@
 
     <gzip zipfile="${dir.temp}/${ant.project.name}.svgz" src="${dir.temp}/${ant.project.name}.min.svg"/>
 
+
+    <delete file="${dir.temp}/${ant.project.name}.concat.css"/>
+    <delete file="${dir.temp}/${ant.project.name}.concat.js"/>
+    <delete file="${dir.temp}/${ant.project.name}.min.css"/>
+    <delete file="${dir.temp}/${ant.project.name}.min.js"/>
+    <delete file="${dir.temp}/${ant.project.name}.raw.svg"/>
+
+
     <!--  обновить примеры  -->
-    <copy file="${dir.temp}/${ant.project.name}.svg" tofile="${dir.examples}/example1/svg/${ant.project.name}.svgz" />
-    <copy file="${dir.temp}/${ant.project.name}.svg" tofile="${dir.examples}/example2/svg/${ant.project.name}.svgz" />
-</target>
+    <copy file="${dir.temp}/${ant.project.name}.svg" tofile="${dir.examples}/example1/svg/${ant.project.name}.svg" />
+    <copy file="${dir.temp}/${ant.project.name}.svg" tofile="${dir.examples}/example2/svg/${ant.project.name}.svg" />
+    <copy file="${dir.temp}/${ant.project.name}.svgz" tofile="${dir.examples}/example2/svg/${ant.project.name}.svgz" />
+    <copy file="${dir.temp}/${ant.project.name}.min.svg" tofile="${dir.examples}/example2/svg/${ant.project.name}.min.svg" />
+
+    </target>
 
 <target name="dist" depends="build">
     <tstamp>
@@ -94,8 +106,8 @@
         <format property="current.tstamp" pattern="d MMM yyyy HH:mm:ss" locale="en,US"/>
     </tstamp>
 
-    <tar destfile="dist/${ant.project.name}-${tstamp.value}.tar.gz" compression="gzip">
-          <fileset dir="${dir.examples}/svg/">
+    <tar destfile="${dir.dist}/${ant.project.name}-${tstamp.value}.tar.gz" compression="gzip">
+          <fileset dir="${dir.temp}">
             <include name="**/*" />
           </fileset>
     </tar>
@@ -120,7 +132,7 @@
 <target name="UglifyJS" description="Минификация кода JavaScript">
     <exec executable="uglifyjs" failonerror="false">
         <arg line="${dir.temp}/${ant.project.name}.concat.js" />
-        <arg line="-o ${dir.temp}/${ant.project.name}.min.js -c -m --mangle-props --warn" />
+        <arg line="-o ${dir.temp}/${ant.project.name}.min.js -c -m --warn" />
     </exec>
 </target>
 
@@ -148,7 +160,7 @@
     <exec executable="svgo">
         <arg line="--input=${dir.temp}/${ant.project.name}.raw.svg" />
         <arg line="--output=${dir.temp}/${ant.project.name}.min.svg" />
-        <!--        <arg line="-config=${dir.build}" />    -->
+        <!--        <arg line="s-disable={removeXMLProcInst}" /> -->
     </exec>
 </target>
 

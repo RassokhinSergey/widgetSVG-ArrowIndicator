@@ -1,4 +1,4 @@
-window.ArrowIndicator = (function () {
+ArrowIndicator = (function () {
     'use strict';
 
     const console = window.console;
@@ -29,10 +29,6 @@ window.ArrowIndicator = (function () {
         doc : null,
     };
 
-    self.home = {
-        win: null,
-    };
-
     self.methods = {
         init: function(evt) {
             let obj;
@@ -40,14 +36,13 @@ window.ArrowIndicator = (function () {
                 self.svg.doc = evt.target.ownerDocument;
 
                 obj = window.frameElement;
-                self.home.win = window.top;
             }
             catch(exception) {
                 console.log('Невозможно получить корень SVG или HTML документа.');
                 return;
             }
 
-            self.options.url = obj.dataset.serviceUrl || self.options.url;
+            self.options.url = obj.dataset.url || self.options.url;
             self.options.id = obj.id || self.options.id;
 
             // выесняем размер блока который выделил пользователь
@@ -74,10 +69,7 @@ window.ArrowIndicator = (function () {
             self.options.cx = self.options.height / 2;
             self.options.cy = (self.options.height - self.options.diagramcentercy) / 2 + self.options.diagramcentercy;
 
-            const path = self.svg.doc.getElementById('path-value');
-            path.setAttribute('stroke-width', self.options.indicatorBgWidth);
-
-            self.methods.renderIndicator();
+            self.methods.createIndicator();
 
             self.methods.getSensor();
             setInterval(self.methods.getSensor, self.options.interval * 1000);
@@ -93,10 +85,10 @@ window.ArrowIndicator = (function () {
                     success: function(data) {
                         if (data.lenght == 0)
                             return;
-                        self.methods.renderValue(data.v);
+                        self.methods.renderValue(data["v"]);
                     },
-                    error: function (jqxhr, textStatus, error) {
-                        console.log('ArrowIndicator getSensor(' + self.options.id +') jqxhr: ' + jqxhr + 
+                    error: function (event, textStatus, error) {
+                        console.log('ArrowIndicator getSensor(' + self.options.id +') event: ' + JSON.stringify(event) + 
                         ' textStatus: ' + textStatus + ' error: ' + error);
                     }
                 });
@@ -108,9 +100,9 @@ window.ArrowIndicator = (function () {
 
         },
 
-        renderValue: function(data) {
+        renderValue: function(value) {
             // изменить цыфровой показатель
-            self.svg.doc.getElementById('text-value').innerHTML = data + ' V';
+            self.svg.doc.getElementById('value').innerHTML = value + ' V';
 
             // изменить графический показатель
             const path = self.svg.doc.getElementById('path-value');
@@ -120,8 +112,8 @@ window.ArrowIndicator = (function () {
 
             // Изменять цвет в зависимости от значенния 
             for (let  i=0; i < self.options.data2.length -1; i++) {
-                if (data > self.options.data2[i]) {
-                    val = data - self.options.data2[0];
+                if (value > self.options.data2[i]) {
+                    val = value - self.options.data2[0];
                     indicatorColors = self.options.indicatorColors[i];
                 }
             }
@@ -133,45 +125,52 @@ window.ArrowIndicator = (function () {
             path.setAttribute('d', self.methods.indicator(self.options.cx, self.options.cy, radius, 0, gradEnd));
         },
 
-        renderIndicator: function() {
+        createIndicator: function() {
             const scene = self.svg.doc.getElementById('scene');
             let text = self.svg.doc.getElementById('name');
             text.setAttribute('x', self.options.cx);
             text.setAttribute('y', 25);
             text.textContent = self.options.textName;
 
+            const path = window.SVG.createElement('path', {
+                id:'path-value',
+                'fill-opacity': 0,
+                'stroke-width' : self.options.indicatorBgWidth,
+            });
+            scene.appendChild(path);
+
             const leng = self.options.data2[self.options.data2.length-1] - self.options.data2[0];
             let gradStart = 0;
             for (let i = 0; i < self.options.data2.length -1; i++) {
                 let gradEnd = (self.options.data2[i+1] - self.options.data2[0]) * 100 / leng * self.options.maxAngle / 100;
-                const path = self.svg.doc.createElementNS('http://www.w3.org/2000/svg', 'path');
-                path.setAttribute('fill-opacity', 0);
-                path.setAttribute('stroke', self.options.indicatorColors[i]);
-                path.setAttribute('stroke-width', self.options.indicatorWidth);
-                path.setAttribute('d', self.methods.indicator(self.options.cx, self.options.cy, self.options.indicatorRadiuses,
-                    gradStart, gradEnd));
+
+                const path = window.SVG.createElement('path', {
+                    'fill-opacity' : 0,
+                    'stroke': self.options.indicatorColors[i],
+                    'stroke-width': self.options.indicatorWidth,
+                    'd': self.methods.indicator(self.options.cx, self.options.cy, self.options.indicatorRadiuses, gradStart, gradEnd),
+                });
                 scene.appendChild(path);
 
-                text = self.methods.textIndicator(gradStart, self.options.data2[i]);
-                scene.appendChild(text);
+                self.methods.textIndicator(gradStart, self.options.data2[i], scene);
                 gradStart = gradEnd;
             }
 
-            text = self.methods.textIndicator(gradStart, self.options.data2[self.options.data2.length -1]);
-            scene.appendChild(text);
+            self.methods.textIndicator(gradStart, self.options.data2[self.options.data2.length -1], scene);
         },
 
-        textIndicator:function(gradStart, textContent) {
-            const text = self.svg.doc.createElementNS('http://www.w3.org/2000/svg', 'text');
+        textIndicator:function(gradStart, textContent, scene) {
             const pStart = self.methods.polarToCartesian(self.options.cx, self.options.cy, self.options.indicatorRadiuses+10, gradStart);
             const grad = gradStart + 270 - (self.options.maxAngle - 180)/2;
-            text.setAttribute('x', pStart.x);
-            text.setAttribute('y', pStart.y);
-            text.setAttribute('text-anchor', 'middle');
-            text.textContent = textContent;
-            text.setAttribute('transform', 'rotate(' + grad + ',' + pStart.x + ',' + pStart.y + ')');
+            const text = window.SVG.createElement('text', {
+                x: pStart.x,
+                y: pStart.y,
+                'text-anchor': 'middle',
+                'transform': 'rotate(' + grad + ',' + pStart.x + ',' + pStart.y + ')',
+            });
 
-            return text;
+            text.textContent = textContent;
+            scene.appendChild(text);
         },
 
         polarToCartesian: function(cx, cy, radius, deg) {

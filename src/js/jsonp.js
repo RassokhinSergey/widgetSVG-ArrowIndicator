@@ -23,7 +23,7 @@ window.$ = (function () {
             }
             url = self.methods.appendParam(url, 'callback', self.options.callbackName);
 
-            self.methods.addScript(id, url, callbackError);
+            self.methods.addScript(id, url, callbackError, id);
 
             window[self.options.callbackName] = (data) => {
                 self.methods.clear(id, timeoutID);
@@ -35,27 +35,33 @@ window.$ = (function () {
             return url + (url.indexOf('?') > 0 ? '&' : '?') + key + '=' + param;
         },
 
-        clear : function(id, timeoutID) {
-            window.clearTimeout(timeoutID);
+        clear: function(id, timeoutID) {
+            if (null != timeoutID) {
+                window.clearTimeout(timeoutID);
+            }
             delete window[self.options.callbackName];
             let ele = document.getElementById(id);
-            ele.parentNode.removeChild(ele);
+            if (null != ele) {
+                ele.parentNode.removeChild(ele);
+            }
         },
 
         addScript: function(id, url, callback) {
-            svgns = 'http://www.w3.org/2000/svg';
+            const svgns = 'http://www.w3.org/2000/svg';
+            const xlink = 'http://www.w3.org/1999/xlink';
             const script = document.createElementNS(svgns, 'script');
-            script.type = 'text/javascript';
+            script.setAttribute('type', 'text/javascript');
             script.setAttribute('async', true);
             script.setAttribute('id', id);
-            script.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', url)
+            script.setAttributeNS(xlink, 'xlink:href', url);
             script.addEventListener('error', callback);
 
-            document.getElementsByTagName('svg')[0].appendChild(script);
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('svg')[0]).appendChild(script);
         },
 
-        startTimer: function(url, callback) {
+        startTimer: function(url, callback, id) {
             return window.setTimeout(() => {
+                self.methods.clear(id, null);
                 callback('Request timeout.', url);
             }, self.options.timeout);
         },

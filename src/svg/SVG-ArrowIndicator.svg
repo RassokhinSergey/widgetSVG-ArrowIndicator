@@ -6,12 +6,11 @@
     height="0"
     onload="ArrowIndicator.init(evt);"
     viewBox="0 0 200 200">
-    <style type="text/css"><![CDATA[@css@]]></style>
+    <style>@css@</style>
     <script type="application/ecmascript"><![CDATA[@js@]]></script>
     <g id="scene">
         <rect width="100%" height="100%" rx="4" ry="4" />
         <text id="name" x="50%" y="25" text-anchor="middle">Name</text>
-        <text id="text-value" x="100" y="160" text-anchor="middle"></text>
-        <path id="path-value" fill-opacity="0"></path>
+        <text id="value" x="100" y="160" text-anchor="middle">0</text>
     </g>
 </svg>

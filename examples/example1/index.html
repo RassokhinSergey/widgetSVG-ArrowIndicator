@@ -5,11 +5,12 @@
     <title>Example SVG-ArrowIndicator</title>
 </head>
 <body>
-    <div><object data="svg/SVG-ArrowIndicator.svgz" type="image/svg+xml" data-service-url="/handlers/getControlVolt.php" ></object></div>
+    <div><object data="svg/SVG-ArrowIndicator.svg" type="image/svg+xml" data-url="/handlers/getControlVolt.php" ></object></div>
     <div>
-    Если обьект один то можно неуказываать ему id. <br>
-    Также если hendler лежит по пути /handlers/getControlVolt.php то data-service-url можно неуказывать.<br>
-    Маштабирование происходит в момент инициализации. Можно задать явно два размера или только один. Если не задавать размер то смаштабирует до размера родителя. Если размер родителя незадан то будет размер по умоолчанию 200 х 200
+    svgz может не отображаться а показывать ошибку это происходит из-за неправильной настройке сервера.
+   Если объект один то можно не указывать ему id. <br>
+   Также если hendler лежит по пути /handlers/getControlVolt.php то data-url можно не указывать.<br>
+   Масштабирование происходит в момент инициализации. Можно задать явно два размера или только один. Если не задавать размер то он масштабирует до размера родителя. Если размер родителя не задан то будет размер по умолчанию 200 х 200 пикселей.
     </div>
 </body>
 </html>
